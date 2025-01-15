@@ -1,6 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from sqlmodel import select
 from app.dependencies import SessionDep
-from app.models.imports import Post, PostPublic, PostCreate
+from app.models import  Post as PostModel
+from app.schemas import Post, PostResponse, PostCreate, PostUpdate
+
 
 router = APIRouter(
     prefix="/posts",
@@ -9,21 +12,63 @@ router = APIRouter(
 )
 
 
-@router.get("/post/{post_id}", response_model=PostPublic)
+@router.get("/{post_id}", response_model=PostResponse)
 def get_post(post_id: int, db_session: SessionDep):
-    pass
+    query = select(PostModel).where(PostModel.id == post_id)
+
+    db_result = db_session.scalar(query)
+    
+    if not db_result:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    
+    result = PostResponse.model_validate(db_result)
+
+    return result
 
 
-@router.post("/post/", response_model=PostPublic)
-def create_post(post: Post, db_session: SessionDep):
-    pass
+@router.post("/", response_model=PostResponse)
+def create_post(post: PostCreate, db_session: SessionDep):
+    db_post = Post.model_validate(post)
+    
+    db_session.add(db_post)
+    db_session.commit()
+    db_session.refresh(db_post)
+    
+    return db_post
 
 
-@router.patch("/post/{post_id}", response_model=PostPublic)
-def update_post(post_id: int, db_session: SessionDep):
-    pass
+@router.patch("/{post_id}", response_model=PostResponse)
+def update_post(post_id: int, patch_post: PostUpdate, db_session: SessionDep):
+    query = select(PostModel).where(PostModel.id == post_id)
+    
+    db_result = db_session.scalar(query)
+
+    if not db_result:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    
+    update_data =  patch_post.model_dump(exclude_unset=True)
+
+    db_result.sqlmodel_update(update_data)
+
+    db_session.add(db_result)
+    db_session.commit()
+    db_session.refresh(db_result)
+
+    print(update_data)
+    
+    return db_result
 
 
-@router.delete("/post/{post_id}", response_model=PostPublic)
+@router.delete("/{post_id}")
 def delete_post(post_id: int, db_session: SessionDep):
-    pass
+    query = select(PostModel).where(PostModel.id == post_id)
+    
+    db_result = db_session.scalar(query)
+
+    if not db_result:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    
+    db_session.delete(db_result)
+    db_session.commit()
+
+    return {"msg": f"Entity {Post.__name__}-ID{db_result.id} has been deleted."}

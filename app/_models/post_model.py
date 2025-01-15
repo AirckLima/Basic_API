@@ -11,7 +11,7 @@ class PostBase(SQLModel):
 
 
 class Post(PostBase, table=True):
-    id: int = Field(primary_key=True, index=True)
+    id: int | None = Field(default=None, primary_key=True, index=True)
     profile_id: int = Field(foreign_key="profile.id", index=True)
 
     profile: "Profile" = Relationship(back_populates="posts")
@@ -20,7 +20,6 @@ class Post(PostBase, table=True):
 class PostCreate(PostBase):
     profile_id: int
     
-
 
 class PostPublic(PostBase):
     id: int

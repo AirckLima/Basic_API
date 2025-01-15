@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from app.routers import users, profiles, posts
 from app.database import create_db_and_tables
-from app.models.imports import *
 
 app = FastAPI(dependencies=[])
 
