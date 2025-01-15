@@ -3,8 +3,8 @@ from datetime import date
 from typing import TYPE_CHECKING, Union, Optional, List
 
 if TYPE_CHECKING:
-    from .user_model import User, UserPublic
-    from .post_model import Post, PostPublic
+    from app.models.user_model import User, UserPublic
+    from app.models.post_model import Post, PostPublic
 
 
 class ProfileBase(SQLModel):
@@ -18,7 +18,7 @@ class Profile(ProfileBase, table=True):
     user_id: int = Field(foreign_key="user.id", index=True)
 
     user: "User" = Relationship()
-    posts: List["User"] = Relationship(back_populates="profile")
+    posts: list["Post"] = Relationship(back_populates="profile")
 
 
 class ProfileCreate(ProfileBase):
@@ -28,8 +28,16 @@ class ProfileCreate(ProfileBase):
 class ProfilePublic(ProfileBase):
     id: int
     user: "UserPublic"
-    posts: List["PostPublic"]
+    posts: list["PostPublic"]
 
 
 class ProfileUpdate(ProfileBase):
     pass
+
+# https://github.com/fastapi/sqlmodel/discussions/757#discussioncomment-9602092
+
+from app.models.user_model import User, UserPublic
+from app.models.post_model import Post, PostPublic
+
+PostPublic.model_rebuild()
+UserPublic.model_rebuild()

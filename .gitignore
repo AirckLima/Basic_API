@@ -1,4 +1,5 @@
 .env
 simple_api.db
 .venv/
-**/__pycache__
+**/**/__pycache__
+database.db
