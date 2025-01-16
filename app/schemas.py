@@ -5,22 +5,23 @@ class OrmBaseModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+
 class UserBase(OrmBaseModel):
     username: str
     age: int
+    email: str
     
 
-class UserExtend(UserBase):
-    email: str
-
-
-class User(UserExtend):
+class User(UserBase):
     id: int
+
+
+class UserDB(User):
     password: str
 
 
-class UserCreate(UserExtend):
-    password: str
+class UserCreate(User):
+    pass
 
 
 class UserResponse(UserBase):
@@ -29,6 +30,7 @@ class UserResponse(UserBase):
 
 class UserUpdate(UserBase):
     pass
+
 
 
 class ProfileBase(OrmBaseModel):
@@ -53,9 +55,9 @@ class ProfileResponse(ProfileBase):
     id: int
 
 
-
 class ProfileUpdate(ProfileBase):
     pass
+
 
 
 class PostBase(OrmBaseModel):

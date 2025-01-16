@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
-from app.dependencies import SessionDep
+from typing import Annotated, Any
+from app.dependencies import SessionDep, AuthDep
 from app.models import  User as UserModel
 from app.schemas import User, UserResponse, UserCreate, UserUpdate
+from app.lib.get_current_user import get_current_user
+from app.lib.get_active_user import get_active_user
+
 
 router = APIRouter(
     prefix="/users",
@@ -12,8 +16,8 @@ router = APIRouter(
 
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user(db_session: SessionDep):
-    pass
+def get_current_user(current_user: Annotated[User, Annotated[User, Depends(get_active_user)]], db_session: SessionDep):
+    return current_user
 
 
 @router.get("/{user_id}", response_model=UserResponse)
