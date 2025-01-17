@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 from app.dependencies import SessionDep
 from app.models import  Post as PostModel
-from app.schemas import Post, PostResponse, PostCreate, PostUpdate
+from app.schemas import PostSchema, PostCreateSchema, PostUpdateSchema
 
 
 router = APIRouter(
@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get("/{post_id}", response_model=PostResponse)
+@router.get("/{post_id}", response_model=PostSchema)
 def get_post(post_id: int, db_session: SessionDep):
     query = select(PostModel).where(PostModel.id == post_id)
 
@@ -21,14 +21,14 @@ def get_post(post_id: int, db_session: SessionDep):
     if not db_result:
         raise HTTPException(status_code=404, detail="Entity not found")
     
-    result = PostResponse.model_validate(db_result)
+    result = PostSchema.model_validate(db_result)
 
     return result
 
 
-@router.post("/", response_model=PostResponse)
-def create_post(post: PostCreate, db_session: SessionDep):
-    db_post = Post.model_validate(post)
+@router.post("/", response_model=PostSchema)
+def create_post(post: PostCreateSchema, db_session: SessionDep):
+    db_post = PostModel(**post.model_dump())
     
     db_session.add(db_post)
     db_session.commit()
@@ -37,8 +37,8 @@ def create_post(post: PostCreate, db_session: SessionDep):
     return db_post
 
 
-@router.patch("/{post_id}", response_model=PostResponse)
-def update_post(post_id: int, patch_post: PostUpdate, db_session: SessionDep):
+@router.patch("/{post_id}", response_model=PostSchema)
+def update_post(post_id: int, patch_post: PostUpdateSchema, db_session: SessionDep):
     query = select(PostModel).where(PostModel.id == post_id)
     
     db_result = db_session.scalar(query)
@@ -71,4 +71,4 @@ def delete_post(post_id: int, db_session: SessionDep):
     db_session.delete(db_result)
     db_session.commit()
 
-    return {"msg": f"Entity {Post.__name__}-ID{db_result.id} has been deleted."}
+    return {"msg": f"Entity {PostSchema.__name__}-ID{db_result.id} has been deleted."}

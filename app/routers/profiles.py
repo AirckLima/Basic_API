@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 from app.dependencies import SessionDep
 from app.models import  Profile as ProfileModel
-from app.schemas import Profile, ProfileResponse, ProfileCreate, ProfileUpdate
+from app.schemas import ProfileSchema, ProfileCreateSchema, ProfileUpdateSchema
 
 router = APIRouter(
     prefix="/profiles",
@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 
-@router.get("/{profile_id}", response_model=ProfileResponse)
+@router.get("/{profile_id}", response_model=ProfileSchema)
 def get_profile(profile_id: int, db_session: SessionDep):
     query = select(ProfileModel).where(ProfileModel.id == profile_id)
 
@@ -20,14 +20,14 @@ def get_profile(profile_id: int, db_session: SessionDep):
     if not db_result:
         raise HTTPException(status_code=404, detail="Entity not found")
     
-    result = ProfileResponse.model_validate(db_result).model_dump()
+    result = ProfileSchema.model_validate(db_result).model_dump()
     
     return result
 
 
-@router.post("/", response_model=ProfileResponse)
-def create_profile(profile: ProfileCreate, db_session: SessionDep):
-    db_profile = Profile.model_validate(profile)
+@router.post("/", response_model=ProfileSchema)
+def create_profile(profile: ProfileCreateSchema, db_session: SessionDep):
+    db_profile = ProfileModel(**profile.model_dump())
     
     db_session.add(db_profile)
     db_session.commit()
@@ -36,8 +36,8 @@ def create_profile(profile: ProfileCreate, db_session: SessionDep):
     return db_profile
 
 
-@router.patch("/{profile_id}", response_model=ProfileResponse)
-def update_profile(profile_id: int, patch_profile: ProfileUpdate, db_session: SessionDep):
+@router.patch("/{profile_id}", response_model=ProfileSchema)
+def update_profile(profile_id: int, patch_profile: ProfileUpdateSchema, db_session: SessionDep):
     query = select(ProfileModel).where(ProfileModel.id == profile_id)
     
     db_result = db_session.scalar(query)
@@ -69,4 +69,4 @@ def delete_profile(profile_id: int, db_session: SessionDep):
     db_session.delete(db_result)
     db_session.commit()
 
-    return {"msg": f"Entity {Profile.__name__}-ID{db_result.id} has been deleted."}
+    return {"msg": f"Entity {ProfileSchema.__name__}-ID{db_result.id} has been deleted."}

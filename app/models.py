@@ -5,7 +5,7 @@ from app.database import Base
 class User(Base):
     __tablename__ = "user"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
 
     username = Column(String, index=True)
     age = Column(Integer)
@@ -17,7 +17,12 @@ class Profile(Base):
     __tablename__ = "profile"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("user.id"), index=True)
+    user_id = Column(BigInteger, ForeignKey("user.id"), index=True)
+
+    nickname = Column(String)
+    avatar = Column(String, nullable=True)
+    bio: str | None = Column(String, nullable=True)
+
 
     user: Mapped["User"] = relationship()
     posts: Mapped[list["Post"]] = relationship(back_populates="profile")
@@ -26,9 +31,9 @@ class Profile(Base):
 class Post(Base):
     __tablename__ = "post"
 
-    id = Column(primary_key=True, index=True)
-    profile_id = Column(ForeignKey("profile.id"), index=True)
+    id = Column(BigInteger, primary_key=True, index=True)
+    profile_id = Column(BigInteger, ForeignKey("profile.id"), index=True)
 
-    conent = Column(String)
+    content = Column(String)
 
     profile: Mapped["Profile"] = relationship(back_populates="posts")

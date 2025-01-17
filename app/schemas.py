@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
@@ -5,80 +6,89 @@ class OrmBaseModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TokenSchema(BaseModel):
+    access_token: str
+    token_type: str
 
-class UserBase(OrmBaseModel):
+
+class TokenDataSchema(BaseModel):
+    username: str | None = Field(default=None)
+
+
+class UserBaseSchema(OrmBaseModel):
     username: str
     age: int
     email: str
     
 
-class User(UserBase):
+class UserSchema(UserBaseSchema):
     id: int
 
 
-class UserDB(User):
+class UserDBSchema(UserSchema):
     password: str
 
 
-class UserCreate(User):
-    pass
+class UserCreateSchema(UserSchema):
+    password: str
+    
 
 
-class UserResponse(UserBase):
+class UserReferenceSchema(UserBaseSchema):
     id: int
 
 
-class UserUpdate(UserBase):
+class UserUpdateSchema(UserBaseSchema):
     pass
 
 
 
-class ProfileBase(OrmBaseModel):
+class ProfileBaseSchema(OrmBaseModel):
     nickname: str
     avatar: str | None = Field(default=None)
     bio: str | None = Field(default=None)
 
 
-class Profile(ProfileBase):
+class ProfileSchema(ProfileBaseSchema):
     id: int 
     user_id: int 
 
-    user: "UserResponse" 
-    posts: list["PostResponse"]
+    user: Optional["UserReferenceSchema"] = None
+    posts: Optional[list["PostReferenceSchema"]] = None
 
 
-class ProfileCreate(ProfileBase):
+class ProfileCreateSchema(ProfileBaseSchema):
     user_id: int
 
 
-class ProfileResponse(ProfileBase):
+class ProfileReferenceSchema(ProfileBaseSchema):
     id: int
 
 
-class ProfileUpdate(ProfileBase):
+class ProfileUpdateSchema(ProfileBaseSchema):
     pass
 
 
 
-class PostBase(OrmBaseModel):
+class PostBaseSchema(OrmBaseModel):
     content: str
 
 
-class Post(PostBase):
+class PostSchema(PostBaseSchema):
     id: int
     profile_id: int
 
-    profile: "ProfileResponse"
+    profile: Optional["ProfileReferenceSchema"] = None
     
 
-class PostCreate(PostBase):
+class PostCreateSchema(PostBaseSchema):
     profile_id: int
     
 
-class PostResponse(PostBase):
+class PostReferenceSchema(PostBaseSchema):
     id: int
 
 
 
-class PostUpdate(PostBase):
+class PostUpdateSchema(PostBaseSchema):
     pass

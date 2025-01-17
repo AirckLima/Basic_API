@@ -9,4 +9,4 @@ SessionDep = Annotated[Session, Depends(get_db_session)]
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-AuthDep = Annotated[OAuth2PasswordBearer, Depends(oauth2_scheme)]
+TokenDep = Annotated[OAuth2PasswordBearer, Depends(oauth2_scheme)]

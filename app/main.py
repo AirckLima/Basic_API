@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+import os
 from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
@@ -5,13 +7,19 @@ from sqlalchemy import select
 from app.routers import users, profiles, posts
 from app.database import create_db_and_tables
 from app.models import User
-from app.schemas import UserDB
+from app.schemas import UserDBSchema
+from app.dependencies import SessionDep
+from app.lib.get_active_user import AuthDep, get_active_user
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 app = FastAPI(dependencies=[])
 
-app.include_router(users.router)
-app.include_router(profiles.router)
-app.include_router(posts.router)
+app.include_router(users.router, dependencies=[Depends(get_active_user)])
+app.include_router(profiles.router, dependencies=[Depends(get_active_user)])
+app.include_router(posts.router, dependencies=[Depends(get_active_user)])
 
 
 @app.on_event("startup")
@@ -26,15 +34,17 @@ async def root():
 
 
 @app.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user_db = select(User).where(User.username == form_data.username)
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db_session: SessionDep):
+    query = select(User).where(User.username == form_data.username)
+
+    user_db = db_session.scalar(query)
 
     if not user_db:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
-    user = UserDB(**user_db)
+    user = UserDBSchema.model_validate(user_db)
 
-    password = "fake" + form_data.password
+    password = form_data.password
 
     if not password == user.password:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
