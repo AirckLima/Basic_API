@@ -1,29 +1,56 @@
+from typing import Annotated
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import os
 from sqlalchemy import select
-from app.models import User
-from app.schemas import UserDBSchema
-from app.dependencies import SessionDep, TokenDep
-# from app.lib
-from datetime import datetime, timedelta
-from time import timezone
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from fastapi import Depends
-from typing import Annotated
 import jwt
+from jwt.exceptions import InvalidTokenError
+from app.database import SessionDep
+from app.models import User
+from app.schemas import UserDBSchema, TokenDataSchema, UserSchema
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated=["auto"])
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+TokenDep = Annotated[OAuth2PasswordBearer, Depends(oauth2_scheme)]
 
 
 def get_current_user(db_session: SessionDep, token: TokenDep) -> UserDBSchema:
-    query = select(User).where(User == token)
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        username = payload.get("sub")
+        
+        if username is None:
+            raise credentials_exception
+
+        token_data = TokenDataSchema(username=username)
+
+    except InvalidTokenError:
+        raise credentials_exception
+
+    query = select(User).where(User.username == token_data.username)
     
     user_data = db_session.scalar(query)
+
+    if user_data is None:
+        raise credentials_exception
 
     return UserDBSchema.model_validate(user_data)
 
@@ -32,11 +59,11 @@ def get_active_user(current_user: Annotated[UserDBSchema, Depends(get_current_us
     return current_user
 
 
-def verify_password(pwd_context: CryptContext, plain_password, hashed_password):
+def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(pwd_context: CryptContext, password):
+def get_password_hash(password):
     return pwd_context.hash(password)
 
 
@@ -64,3 +91,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+AuthDep = Annotated[UserSchema, Depends(get_active_user)]

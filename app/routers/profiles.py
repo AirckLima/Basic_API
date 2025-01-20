@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
-from app.dependencies import SessionDep
+from app.database import SessionDep
 from app.models import  Profile as ProfileModel
 from app.schemas import ProfileSchema, ProfileCreateSchema, ProfileUpdateSchema
 

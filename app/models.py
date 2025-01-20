@@ -10,7 +10,7 @@ class User(Base):
     username = Column(String, index=True)
     age = Column(Integer)
     email = Column(Integer, index=True)
-    password = Column(String)
+    hashed_password = Column(String)
 
 
 class Profile(Base):

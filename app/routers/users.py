@@ -1,11 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlmodel import select
-from typing import Annotated, Any
-from app.dependencies import SessionDep, TokenDep
+from app.database import SessionDep
 from app.models import  User as UserModel
 from app.schemas import UserSchema, UserCreateSchema, UserUpdateSchema
-from app.lib.get_current_user import get_current_user
-from app.lib.get_active_user import get_active_user, AuthDep
+from app.lib.verification import pwd_context, AuthDep
 
 
 router = APIRouter(
@@ -37,6 +35,8 @@ def get_user(user_id: int, db_session: SessionDep):
 @router.post("/", response_model=UserSchema)
 def create_user(user: UserCreateSchema, db_session: SessionDep):
     db_user = UserModel(**user.model_dump())
+
+    db_user.hashed_password = pwd_context.hash(db_user.hashed_password)
     
     db_session.add(db_user)
     db_session.commit()
@@ -61,8 +61,6 @@ def update_user(user_id: int, patch_user: UserUpdateSchema, db_session: SessionD
     db_session.add(db_result)
     db_session.commit()
     db_session.refresh(db_result)
-
-    print(update_data)
     
     return db_result
 

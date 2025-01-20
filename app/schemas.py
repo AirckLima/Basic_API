@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrmBaseModel(BaseModel):
@@ -26,11 +26,11 @@ class UserSchema(UserBaseSchema):
 
 
 class UserDBSchema(UserSchema):
-    password: str
+    hashed_password: str
 
 
 class UserCreateSchema(UserSchema):
-    password: str
+    hashed_password: str
     
 
 

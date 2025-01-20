@@ -1,8 +1,7 @@
 from sqlalchemy import select
 from app.models import User
 from app.schemas import UserDBSchema
-from app.dependencies import SessionDep
-
+from app.database import SessionDep
 
 
 def get_user_by_id(db_session:SessionDep, user_id:int):
